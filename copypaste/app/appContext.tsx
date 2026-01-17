@@ -74,12 +74,46 @@ export function SessionContextProvider({
     socket.onclose = () => {
       console.log("Websocket connection closed.");
       setSession({ active: false });
+      router.replace("/");
     };
     socket.onerror = () => {
       setError("Failed to connect to websocket.");
     };
   };
-  const startNewSession = () => {};
+  const startNewSession = async () => {
+    const sessionConnectResponse: SessionConnectResponse =
+      await SessionService.startConnection();
+    if (!sessionConnectResponse.status || !sessionConnectResponse.info) {
+      setError("No response from server...");
+      return;
+    }
+
+    const socket: WebSocket = new WebSocket(
+      sessionConnectResponse.info.websocketUrl,
+    );
+    const identifier = sessionConnectResponse.info.identifier;
+    const websocketUrl = sessionConnectResponse.info.websocketUrl;
+    socket.onopen = () => {
+      console.log("Websocket connection opened.");
+      setSession((currentSession) => {
+        currentSession.active = true;
+        currentSession.socket = {
+          webSocket: socket,
+          socketInfo: { identifier: identifier, websocketUrl: websocketUrl },
+        };
+        return currentSession;
+      });
+      router.replace("/pages/session/" + identifier);
+    };
+    socket.onclose = () => {
+      console.log("Websocket connection closed.");
+      setSession({ active: false });
+      router.replace("/");
+    };
+    socket.onerror = () => {
+      setError("Failed to connect to websocket.");
+    };
+  };
   return (
     <SessionContext.Provider
       value={{
