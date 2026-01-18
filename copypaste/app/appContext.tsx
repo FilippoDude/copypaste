@@ -10,9 +10,10 @@ import {
 interface SessionContextInterface {
   session: Session;
   error: string | null;
+  currentText: string;
+  updateCurrentText: (text: string) => void;
   updateError: (error: string | null) => void;
   accessExistingSession: (sessionId: string) => void;
-  sendPaste: () => Promise<void>;
   startNewSession: () => void;
 }
 
@@ -28,15 +29,23 @@ export function SessionContextProvider({
     active: false,
   });
   const [error, setError] = useState<string | null>(null);
+  const [currentText, setCurrentText] = useState<string>("");
 
   const updateError = (error: null | string) => {
     setError(error);
   };
 
-  const sendPaste = async () => {
+  const updateCurrentText = (text: string) => {
+    setCurrentText(text);
+    sendTextToSession(text);
+  };
+
+  const sendTextToSession = async (text: string) => {
     if (session.active && session.socket) {
       if (session.socket.webSocket.readyState == WebSocket.OPEN) {
-        session.socket.webSocket.send("TEST MESSAGE");
+        session.socket.webSocket.send(
+          JSON.stringify({ type: "send", text: text }),
+        );
       } else {
         console.log("Websocket connection has been already closed.");
         setSession({ active: false });
@@ -46,19 +55,8 @@ export function SessionContextProvider({
     }
   };
 
-  const accessExistingSession = async (sessionId: string) => {
-    const sessionConnectResponse: SessionConnectResponse =
-      await SessionService.connectToSession(sessionId);
-    if (!sessionConnectResponse.status || !sessionConnectResponse.info) {
-      setError("No response from server...");
-      return;
-    }
-
-    const socket: WebSocket = new WebSocket(
-      sessionConnectResponse.info.websocketUrl,
-    );
-    const identifier = sessionConnectResponse.info.identifier;
-    const websocketUrl = sessionConnectResponse.info.websocketUrl;
+  const manageWebsocket = async (websocketUrl: string, identifier: string) => {
+    const socket: WebSocket = new WebSocket(websocketUrl);
     socket.onopen = () => {
       console.log("Websocket connection opened.");
       setSession((currentSession) => {
@@ -76,9 +74,25 @@ export function SessionContextProvider({
       setSession({ active: false });
       router.replace("/");
     };
+    socket.onmessage = (event: MessageEvent) => {
+      setCurrentText(event.data.toString());
+    };
     socket.onerror = () => {
       setError("Failed to connect to websocket.");
     };
+  };
+
+  const accessExistingSession = async (sessionId: string) => {
+    const sessionConnectResponse: SessionConnectResponse =
+      await SessionService.connectToSession(sessionId);
+    if (!sessionConnectResponse.status || !sessionConnectResponse.info) {
+      setError("No response from server...");
+      return;
+    }
+    manageWebsocket(
+      sessionConnectResponse.info.websocketUrl,
+      sessionConnectResponse.info.identifier,
+    );
   };
   const startNewSession = async () => {
     const sessionConnectResponse: SessionConnectResponse =
@@ -87,42 +101,21 @@ export function SessionContextProvider({
       setError("No response from server...");
       return;
     }
-
-    const socket: WebSocket = new WebSocket(
+    manageWebsocket(
       sessionConnectResponse.info.websocketUrl,
+      sessionConnectResponse.info.identifier,
     );
-    const identifier = sessionConnectResponse.info.identifier;
-    const websocketUrl = sessionConnectResponse.info.websocketUrl;
-    socket.onopen = () => {
-      console.log("Websocket connection opened.");
-      setSession((currentSession) => {
-        currentSession.active = true;
-        currentSession.socket = {
-          webSocket: socket,
-          socketInfo: { identifier: identifier, websocketUrl: websocketUrl },
-        };
-        return currentSession;
-      });
-      router.replace("/pages/session/" + identifier);
-    };
-    socket.onclose = () => {
-      console.log("Websocket connection closed.");
-      setSession({ active: false });
-      router.replace("/");
-    };
-    socket.onerror = () => {
-      setError("Failed to connect to websocket.");
-    };
   };
   return (
     <SessionContext.Provider
       value={{
         session,
         error,
+        currentText,
+        updateCurrentText,
         updateError,
         accessExistingSession,
         startNewSession,
-        sendPaste,
       }}
     >
       {children}

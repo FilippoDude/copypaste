@@ -1,12 +1,17 @@
 "use client";
 import { useSessionContext } from "@/app/appContext";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { ChangeEvent, useEffect } from "react";
 
 export default function SessionPage() {
-  const { session, accessExistingSession } = useSessionContext();
+  const { session, accessExistingSession, updateCurrentText, currentText } =
+    useSessionContext();
   const router = useRouter();
   const { slug } = useParams();
+
+  const inputChange = (e: ChangeEvent<HTMLInputElement>) => {
+    updateCurrentText(e.target.value);
+  };
 
   useEffect(() => {
     if (
@@ -19,5 +24,10 @@ export default function SessionPage() {
     }
   }, []);
 
-  return <p>Anyway: {slug}</p>;
+  return (
+    <div>
+      <p>Anyway: {slug}</p>
+      <input type="text" onChange={inputChange} value={currentText} />
+    </div>
+  );
 }
