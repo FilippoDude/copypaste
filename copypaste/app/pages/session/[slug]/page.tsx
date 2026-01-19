@@ -1,7 +1,7 @@
 "use client";
 import { useSessionContext } from "@/app/appContext";
 import { useParams, useRouter } from "next/navigation";
-import { ChangeEvent, useEffect } from "react";
+import { ChangeEvent, useEffect, useReducer, useRef } from "react";
 import Image from "next/image";
 import ToastComponent from "@/app/components/toast-component";
 
@@ -12,8 +12,10 @@ export default function SessionPage() {
     updateCurrentText,
     currentText,
     exitSession,
+    sendNotificationFromLocal,
   } = useSessionContext();
   const { slug } = useParams();
+  const latestCopyId = useRef(0);
 
   const inputChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
     updateCurrentText(e.target.value);
@@ -31,8 +33,15 @@ export default function SessionPage() {
   }, []);
 
   const copySessionIdToClipboard = () => {
-    if (session.socket)
-      navigator.clipboard.writeText(session.socket?.socketInfo.identifier);
+    if (session.socket) {
+      navigator.clipboard.writeText(session.socket.socketInfo.identifier);
+      sendNotificationFromLocal(
+        "" +
+          latestCopyId.current.toString() +
+          " | Session id copied to clipboard!",
+      );
+      latestCopyId.current = latestCopyId.current + 1;
+    }
   };
 
   return (

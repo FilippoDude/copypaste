@@ -51,7 +51,7 @@ export default function ToastComponent() {
       setTimeout(() => {
         isBuffering.current = false;
         handleBuffering(undefined);
-      }, 500);
+      }, 10);
     }
   };
 

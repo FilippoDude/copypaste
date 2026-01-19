@@ -17,6 +17,7 @@ interface SessionContextInterface {
   startNewSession: () => void;
   exitSession: () => void;
   setNotificationRef: (fn: (text: string) => void) => void;
+  sendNotificationFromLocal: (text: string) => void;
 }
 
 const SessionContext = createContext<SessionContextInterface | null>(null);
@@ -47,7 +48,15 @@ export function SessionContextProvider({
     setCurrentText(text);
     sendTextToSession(text);
   };
-
+  const sendNotificationFromLocal = (text: string) => {
+    if (notificationRef.current) notificationRef.current(text);
+  };
+  const closeConnection = () => {
+    setCurrentText("");
+    if (session.socket) session.socket.webSocket.close();
+    setSession({ active: false });
+    router.replace("/");
+  };
   const sendTextToSession = async (text: string) => {
     if (session.active && session.socket) {
       if (session.socket.webSocket.readyState == WebSocket.OPEN) {
@@ -56,7 +65,7 @@ export function SessionContextProvider({
         );
       } else {
         console.log("Websocket connection has been already closed.");
-        setSession({ active: false });
+        closeConnection();
       }
     } else {
       console.log("Websocket connection not active!");
@@ -79,8 +88,7 @@ export function SessionContextProvider({
     };
     socket.onclose = () => {
       console.log("Websocket connection closed.");
-      setSession({ active: false });
-      router.replace("/");
+      closeConnection();
     };
     socket.onmessage = (event: MessageEvent) => {
       const stringData: string = event.data.toString();
@@ -141,9 +149,7 @@ export function SessionContextProvider({
   };
 
   const exitSession = async () => {
-    if (session.socket) session.socket.webSocket.close();
-    setSession({ active: false });
-    router.replace("/");
+    closeConnection();
   };
   return (
     <SessionContext.Provider
@@ -157,6 +163,7 @@ export function SessionContextProvider({
         startNewSession,
         exitSession,
         setNotificationRef,
+        sendNotificationFromLocal,
       }}
     >
       {children}
