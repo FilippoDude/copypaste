@@ -15,6 +15,7 @@ interface SessionContextInterface {
   updateError: (error: string | null) => void;
   accessExistingSession: (sessionId: string) => void;
   startNewSession: () => void;
+  exitSession: () => void;
 }
 
 const SessionContext = createContext<SessionContextInterface | null>(null);
@@ -106,6 +107,12 @@ export function SessionContextProvider({
       sessionConnectResponse.info.identifier,
     );
   };
+
+  const exitSession = async () => {
+    if (session.socket) session.socket.webSocket.close();
+    setSession({ active: false });
+    router.replace("/");
+  };
   return (
     <SessionContext.Provider
       value={{
@@ -116,6 +123,7 @@ export function SessionContextProvider({
         updateError,
         accessExistingSession,
         startNewSession,
+        exitSession,
       }}
     >
       {children}
