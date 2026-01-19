@@ -3,6 +3,7 @@ import { useSessionContext } from "@/app/appContext";
 import { useParams, useRouter } from "next/navigation";
 import { ChangeEvent, useEffect } from "react";
 import Image from "next/image";
+import ToastComponent from "@/app/components/toast-component";
 
 export default function SessionPage() {
   const {
@@ -12,7 +13,6 @@ export default function SessionPage() {
     currentText,
     exitSession,
   } = useSessionContext();
-  const router = useRouter();
   const { slug } = useParams();
 
   const inputChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
@@ -37,6 +37,7 @@ export default function SessionPage() {
 
   return (
     <div>
+      <ToastComponent></ToastComponent>
       <div className="fixed top-2 right-2 w-60 h-20 bg-green-200 rounded-2xl p-2 border-gray-400 border-2 z-10 flex flex-row">
         <div>
           <p className="font-bold text-gray-600">Session id:</p>

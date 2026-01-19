@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   Session,
@@ -16,6 +16,7 @@ interface SessionContextInterface {
   accessExistingSession: (sessionId: string) => void;
   startNewSession: () => void;
   exitSession: () => void;
+  setNotificationRef: (fn: (text: string) => void) => void;
 }
 
 const SessionContext = createContext<SessionContextInterface | null>(null);
@@ -31,6 +32,12 @@ export function SessionContextProvider({
   });
   const [error, setError] = useState<string | null>(null);
   const [currentText, setCurrentText] = useState<string>("");
+
+  const notificationRef = useRef<(text: string) => void | null>(null);
+
+  const setNotificationRef = (fn: (text: string) => void) => {
+    notificationRef.current = fn;
+  };
 
   const updateError = (error: null | string) => {
     setError(error);
@@ -76,7 +83,32 @@ export function SessionContextProvider({
       router.replace("/");
     };
     socket.onmessage = (event: MessageEvent) => {
-      setCurrentText(event.data.toString());
+      const stringData: string = event.data.toString();
+      console.log(stringData);
+      let parsedData = null;
+      try {
+        parsedData = JSON.parse(stringData);
+      } catch (e) {
+        return;
+      }
+      if (!parsedData) return;
+
+      if (
+        parsedData.type &&
+        parsedData.type === "msg" &&
+        typeof parsedData.message === "string"
+      )
+        setCurrentText(parsedData.message);
+      console.log(parsedData);
+      if (
+        parsedData.type &&
+        parsedData.type === "notification" &&
+        typeof parsedData.message === "string" &&
+        notificationRef.current
+      ) {
+        console.log("TEST");
+        notificationRef.current(parsedData.message);
+      }
     };
     socket.onerror = () => {
       setError("Failed to connect to websocket.");
@@ -124,6 +156,7 @@ export function SessionContextProvider({
         accessExistingSession,
         startNewSession,
         exitSession,
+        setNotificationRef,
       }}
     >
       {children}
