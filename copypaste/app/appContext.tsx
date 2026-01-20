@@ -18,6 +18,8 @@ interface SessionContextInterface {
   exitSession: () => void;
   setNotificationRef: (fn: (text: string) => void) => void;
   sendNotificationFromLocal: (text: string) => void;
+  recaptchaValue: string | null;
+  changeRecaptchaValue: (text: string | null) => void;
 }
 
 const SessionContext = createContext<SessionContextInterface | null>(null);
@@ -33,8 +35,13 @@ export function SessionContextProvider({
   });
   const [error, setError] = useState<string | null>(null);
   const [currentText, setCurrentText] = useState<string>("");
+  const [recaptchaValue, setRecaptchaValue] = useState<string | null>(null);
 
   const notificationRef = useRef<(text: string) => void | null>(null);
+
+  const changeRecaptchaValue = (value: string | null) => {
+    setRecaptchaValue(value);
+  };
 
   const setNotificationRef = (fn: (text: string) => void) => {
     notificationRef.current = fn;
@@ -73,9 +80,15 @@ export function SessionContextProvider({
   };
 
   const manageWebsocket = async (websocketUrl: string, identifier: string) => {
+    let jwtToken: string | null = null;
+    if (recaptchaValue) {
+      jwtToken = await SessionService.validateRecaptchaValue(recaptchaValue);
+    }
+
     const socket: WebSocket = new WebSocket(websocketUrl);
     socket.onopen = () => {
       console.log("Websocket connection opened.");
+      socket.send(JSON.stringify({ type: "verification", text: jwtToken }));
       setSession((currentSession) => {
         currentSession.active = true;
         currentSession.socket = {
@@ -151,6 +164,7 @@ export function SessionContextProvider({
   const exitSession = async () => {
     closeConnection();
   };
+
   return (
     <SessionContext.Provider
       value={{
@@ -164,6 +178,8 @@ export function SessionContextProvider({
         exitSession,
         setNotificationRef,
         sendNotificationFromLocal,
+        recaptchaValue,
+        changeRecaptchaValue,
       }}
     >
       {children}

@@ -17,6 +17,29 @@ export interface SessionSocket {
   socketInfo: SessionSocketInfo;
 }
 export const SessionService = {
+  async validateRecaptchaValue(recaptchaValue: string): Promise<string | null> {
+    let finalValue: string | null = null;
+    await fetch("http://localhost:3001/verify", {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ recaptchaValue: recaptchaValue }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (!data) {
+          return;
+        }
+        const jwtToken = data.jwtToken;
+        if (typeof jwtToken === "string") {
+          finalValue = jwtToken;
+        }
+      });
+    return finalValue;
+  },
+
   async connectToSession(sessionId: string): Promise<SessionConnectResponse> {
     //return {
     //  status: true,
