@@ -62,6 +62,7 @@ export function SessionContextProvider({
     setCurrentText("");
     if (session.socket) session.socket.webSocket.close();
     setSession({ active: false });
+    setRecaptchaValue(null);
     router.replace("/");
   };
   const sendTextToSession = async (text: string) => {
