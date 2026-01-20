@@ -19,7 +19,7 @@ export interface SessionSocket {
 export const SessionService = {
   async validateRecaptchaValue(recaptchaValue: string): Promise<string | null> {
     let finalValue: string | null = null;
-    await fetch("http://localhost:3001/verify", {
+    await fetch("https://apicopypaste.filippodude.com/verify", {
       method: "POST",
       headers: {
         Accept: "application/json",
@@ -46,7 +46,7 @@ export const SessionService = {
     //  info: { websocketUrl: "https://test.com", identifier: "123" },
     ///};
     let finalObj: SessionConnectResponse | null = null;
-    await fetch("http://localhost:3001/connect/" + sessionId, {
+    await fetch("https://apicopypaste.filippodude.com/connect/" + sessionId, {
       method: "GET",
       headers: {
         Accept: "application/json",
@@ -83,7 +83,7 @@ export const SessionService = {
     //  info: { websocketUrl: "https://test.com", identifier: "123" },
     ///};
     let finalObj: SessionConnectResponse | null = null;
-    await fetch("http://localhost:3001/start/", {
+    await fetch("https://apicopypaste.filippodude.com/start/", {
       method: "GET",
       headers: {
         Accept: "application/json",

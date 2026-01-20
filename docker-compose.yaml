@@ -1,0 +1,11 @@
+name: copypastefrontend
+services:
+  website:
+    image: node
+    working_dir: /app
+    restart: always
+    ports:
+      - "${WEBSITE_PORT}:3000"
+    volumes:
+      - ./app:/app
+    entrypoint: ["sh", "-c", "chmod +x ./entrypoint.sh && ./entrypoint.sh"]
