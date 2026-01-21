@@ -7,7 +7,7 @@ services:
     ports:
       - "${WEBSITE_PORT}:3000"
     environment:
-      - SERVER_URL=${SERVER_URL}
+      - REACT_APP_SERVER_URL=${REACT_APP_SERVER_URL}
     volumes:
       - ./app:/app
     entrypoint: ["sh", "-c", "chmod +x ./entrypoint.sh && ./entrypoint.sh"]
