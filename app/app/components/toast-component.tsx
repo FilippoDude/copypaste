@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useSessionContext } from "../appContext";
+import { useSessionContext } from "../sessionContext";
 
 type Toast = {
   id: number;
@@ -71,7 +71,7 @@ export default function ToastComponent() {
 
   return (
     <div className=" fixed w-full h-full z-40 flex flex-col duration-500 transition-all pointer-events-none">
-      <div className="absolute right-5 top-25 duration-500 transition-all">
+      <div className="absolute right-5 top-50 duration-500 transition-all">
         {messagesArray.map((element, i) => {
           return (
             <div key={i} className="">

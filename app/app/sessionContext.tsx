@@ -1,21 +1,26 @@
 "use client";
 
 import { createContext, useContext, useRef, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
   Session,
   SessionService,
   SessionConnectResponse,
 } from "./services/session-service";
 interface SessionContextInterface {
-  session: Session;
   error: string | null;
-  currentText: string;
-  updateCurrentText: (text: string) => void;
   updateError: (error: string | null) => void;
-  accessExistingSession: (sessionId: string) => void;
-  startNewSession: () => void;
-  exitSession: () => void;
+  sessionData: {
+    currentText: string;
+    updateCurrentText: (text: string) => void;
+    startTime: number;
+  };
+  session: Session;
+  sessionManagement: {
+    accessExistingSession: (sessionId: string) => void;
+    startNewSession: () => void;
+    exitSession: () => void;
+  };
   setNotificationRef: (fn: (text: string) => void) => void;
   sendNotificationFromLocal: (text: string) => void;
   recaptchaValue: string | null;
@@ -30,11 +35,10 @@ export function SessionContextProvider({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const [session, setSession] = useState<Session>({
-    active: false,
-  });
+  const [session, setSession] = useState<Session>({});
   const [error, setError] = useState<string | null>(null);
   const [currentText, setCurrentText] = useState<string>("");
+  const [startTime, setStartTime] = useState(0);
   const [recaptchaValue, setRecaptchaValue] = useState<string | null>(null);
 
   const notificationRef = useRef<(text: string) => void | null>(null);
@@ -61,12 +65,13 @@ export function SessionContextProvider({
   const closeConnection = () => {
     setCurrentText("");
     if (session.socket) session.socket.webSocket.close();
-    setSession({ active: false });
+    setStartTime(0);
+    setSession({});
     setRecaptchaValue(null);
     router.replace("/");
   };
   const sendTextToSession = async (text: string) => {
-    if (session.active && session.socket) {
+    if (session.socket) {
       if (session.socket.webSocket.readyState == WebSocket.OPEN) {
         session.socket.webSocket.send(
           JSON.stringify({ type: "send", text: text }),
@@ -91,7 +96,6 @@ export function SessionContextProvider({
       console.log("Websocket connection opened.");
       socket.send(JSON.stringify({ type: "verification", text: jwtToken }));
       setSession((currentSession) => {
-        currentSession.active = true;
         currentSession.socket = {
           webSocket: socket,
           socketInfo: { identifier: identifier, websocketUrl: websocketUrl },
@@ -121,15 +125,24 @@ export function SessionContextProvider({
         typeof parsedData.message === "string"
       )
         setCurrentText(parsedData.message);
-      console.log(parsedData);
+
       if (
         parsedData.type &&
         parsedData.type === "notification" &&
         typeof parsedData.message === "string" &&
         notificationRef.current
       ) {
-        console.log("TEST");
         notificationRef.current(parsedData.message);
+      }
+
+      if (
+        parsedData.type &&
+        parsedData.type === "sync" &&
+        typeof parsedData.message === "string" &&
+        typeof parsedData.startTime === "number"
+      ) {
+        setCurrentText(parsedData.message);
+        setStartTime(parsedData.startTime);
       }
     };
     socket.onerror = () => {
@@ -169,14 +182,19 @@ export function SessionContextProvider({
   return (
     <SessionContext.Provider
       value={{
-        session,
         error,
-        currentText,
-        updateCurrentText,
+        sessionData: {
+          currentText,
+          updateCurrentText,
+          startTime,
+        },
         updateError,
-        accessExistingSession,
-        startNewSession,
-        exitSession,
+        session,
+        sessionManagement: {
+          accessExistingSession,
+          startNewSession,
+          exitSession,
+        },
         setNotificationRef,
         sendNotificationFromLocal,
         recaptchaValue,

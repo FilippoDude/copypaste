@@ -1,5 +1,5 @@
 import { ChangeEvent, Ref, useEffect, useRef, useState } from "react";
-import { useSessionContext } from "../appContext";
+import { useSessionContext } from "../sessionContext";
 import ReCAPTCHA from "react-google-recaptcha";
 export default function InitialPopupComponent({
   accessExistingSession,

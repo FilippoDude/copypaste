@@ -1,7 +1,6 @@
 import { SERVER_URL } from "@/enviroment";
 
 export interface Session {
-  active: boolean;
   socket?: SessionSocket;
 }
 export interface SessionConnectResponse {

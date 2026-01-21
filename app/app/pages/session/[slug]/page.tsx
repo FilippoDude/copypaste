@@ -1,34 +1,29 @@
 "use client";
-import { useSessionContext } from "@/app/appContext";
 import { useParams, useRouter } from "next/navigation";
-import { ChangeEvent, useEffect, useReducer, useRef } from "react";
+import { ChangeEvent, useEffect, useReducer, useRef, useState } from "react";
 import Image from "next/image";
 import ToastComponent from "@/app/components/toast-component";
+import { useSessionContext } from "@/app/sessionContext";
 
 export default function SessionPage() {
-  const {
-    session,
-    accessExistingSession,
-    updateCurrentText,
-    currentText,
-    exitSession,
-    sendNotificationFromLocal,
-  } = useSessionContext();
+  const { session, sessionManagement, sessionData, sendNotificationFromLocal } =
+    useSessionContext();
   const { slug } = useParams();
   const latestCopyId = useRef(0);
+  const [dateStartTime, setDateStartTime] = useState<string>("");
 
   const inputChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
-    updateCurrentText(e.target.value);
+    sessionData.updateCurrentText(e.target.value);
   };
 
   useEffect(() => {
     if (
-      !session.active ||
       !session.socket ||
       session.socket.socketInfo.identifier != slug ||
       session.socket.webSocket.readyState == WebSocket.CLOSED
     ) {
-      if (typeof slug == "string") accessExistingSession(slug);
+      if (typeof slug == "string")
+        sessionManagement.accessExistingSession(slug);
     }
   }, []);
 
@@ -43,6 +38,23 @@ export default function SessionPage() {
       latestCopyId.current = latestCopyId.current + 1;
     }
   };
+
+  useEffect(() => {
+    const date = new Date(sessionData.startTime);
+    const formattedDate: string =
+      date.getDate().toString() +
+      "/" +
+      (date.getMonth() + 1).toString() +
+      "/" +
+      date.getFullYear().toString() +
+      " | " +
+      date.getHours() +
+      ":" +
+      date.getMinutes() +
+      ":" +
+      date.getMinutes();
+    setDateStartTime(formattedDate);
+  }, [sessionData.startTime]);
 
   return (
     <div>
@@ -68,7 +80,7 @@ export default function SessionPage() {
         <div className="w-20 h-full top-0 right-0 absolute flex items-center pr-2">
           <button
             className="cursor-pointer hover:opacity-50"
-            onClick={exitSession}
+            onClick={sessionManagement.exitSession}
           >
             <Image
               src="/exit.svg"
@@ -80,11 +92,18 @@ export default function SessionPage() {
           </button>
         </div>
       </div>
+
+      <div className="fixed top-25 right-2 w-60 h-17 bg-green-200 rounded-2xl p-2 border-gray-400 border-2 z-10 flex flex-row">
+        <div>
+          <p className="font-bold text-gray-600">Session start time</p>
+          <p>{dateStartTime}</p>
+        </div>
+      </div>
       <div className="relative w-full h-screen bg-gray-100">
         <textarea
           placeholder="Psst... Write in here"
           onChange={inputChange}
-          value={currentText}
+          value={sessionData.currentText}
           className="relative w-full h-screen p-2"
         ></textarea>
       </div>

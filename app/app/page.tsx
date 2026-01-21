@@ -1,20 +1,15 @@
 "use client";
 import InitialPopupComponent from "./components/initial_popup-component";
-import { useSessionContext } from "./appContext";
+import { useSessionContext } from "./sessionContext";
 export default function Home() {
-  const {
-    session,
-    accessExistingSession,
-    startNewSession,
-    changeRecaptchaValue,
-    recaptchaValue,
-  } = useSessionContext();
+  const { session, sessionManagement, changeRecaptchaValue, recaptchaValue } =
+    useSessionContext();
   return (
     <div className="w-full h-full relative bg-gray-200">
       {session ? (
         <InitialPopupComponent
-          accessExistingSession={accessExistingSession}
-          startNewSession={startNewSession}
+          accessExistingSession={sessionManagement.accessExistingSession}
+          startNewSession={sessionManagement.startNewSession}
           changeRecaptchaValue={changeRecaptchaValue}
           recaptchaValue={recaptchaValue}
         />
