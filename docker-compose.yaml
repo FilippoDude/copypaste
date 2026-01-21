@@ -6,6 +6,8 @@ services:
     restart: always
     ports:
       - "${WEBSITE_PORT}:3000"
+    environment:
+      - SERVER_URL=${SERVER_URL}
     volumes:
       - ./app:/app
     entrypoint: ["sh", "-c", "chmod +x ./entrypoint.sh && ./entrypoint.sh"]
