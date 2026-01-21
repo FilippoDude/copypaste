@@ -1,3 +1,5 @@
+import { SERVER_URL } from "@/enviroment";
+
 export interface Session {
   active: boolean;
   socket?: SessionSocket;
@@ -19,7 +21,7 @@ export interface SessionSocket {
 export const SessionService = {
   async validateRecaptchaValue(recaptchaValue: string): Promise<string | null> {
     let finalValue: string | null = null;
-    await fetch("https://apicopypaste.filippodude.com/verify", {
+    await fetch(SERVER_URL + "/verify", {
       method: "POST",
       headers: {
         Accept: "application/json",
@@ -46,7 +48,7 @@ export const SessionService = {
     //  info: { websocketUrl: "https://test.com", identifier: "123" },
     ///};
     let finalObj: SessionConnectResponse | null = null;
-    await fetch("https://apicopypaste.filippodude.com/connect/" + sessionId, {
+    await fetch(SERVER_URL + "/connect/" + sessionId, {
       method: "GET",
       headers: {
         Accept: "application/json",
@@ -83,7 +85,7 @@ export const SessionService = {
     //  info: { websocketUrl: "https://test.com", identifier: "123" },
     ///};
     let finalObj: SessionConnectResponse | null = null;
-    await fetch("https://apicopypaste.filippodude.com/start/", {
+    await fetch(SERVER_URL + "/start", {
       method: "GET",
       headers: {
         Accept: "application/json",
