@@ -7,6 +7,7 @@ import {
   SessionService,
   SessionConnectResponse,
 } from "./services/session-service";
+import { CopypasteHelper } from "./helpers/copypaste-helper";
 interface SessionContextInterface {
   error: string | null;
   updateError: (error: string | null) => void;
@@ -56,6 +57,7 @@ export function SessionContextProvider({
   };
 
   const updateCurrentText = (text: string) => {
+    CopypasteHelper.getTextDifferences(text, currentText);
     setCurrentText(text);
     sendTextToSession(text);
   };

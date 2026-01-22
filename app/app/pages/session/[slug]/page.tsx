@@ -4,6 +4,7 @@ import { ChangeEvent, useEffect, useReducer, useRef, useState } from "react";
 import Image from "next/image";
 import ToastComponent from "@/app/components/toast-component";
 import { useSessionContext } from "@/app/sessionContext";
+import { CopypasteHelper } from "@/app/helpers/copypaste-helper";
 
 export default function SessionPage() {
   const { session, sessionManagement, sessionData, sendNotificationFromLocal } =
@@ -13,6 +14,7 @@ export default function SessionPage() {
   const [dateStartTime, setDateStartTime] = useState<string>("");
 
   const inputChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
+    console.log(e);
     sessionData.updateCurrentText(e.target.value);
   };
 
