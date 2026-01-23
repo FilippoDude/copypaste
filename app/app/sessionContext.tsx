@@ -7,7 +7,7 @@ import {
   SessionService,
   SessionConnectResponse,
 } from "./services/session-service";
-import { CopypasteHelper } from "./helpers/copypaste-helper";
+import { CopypasteHelper, TextUpdate } from "./helpers/copypaste-helper";
 interface SessionContextInterface {
   error: string | null;
   updateError: (error: string | null) => void;
@@ -57,9 +57,12 @@ export function SessionContextProvider({
   };
 
   const updateCurrentText = (text: string) => {
-    CopypasteHelper.getTextDifferences(text, currentText);
     setCurrentText(text);
-    sendTextToSession(text);
+    const textUpdate: TextUpdate | null = CopypasteHelper.getTextDifferences(
+      text,
+      currentText,
+    );
+    if (textUpdate) sendTextToSession(textUpdate);
   };
   const sendNotificationFromLocal = (text: string) => {
     if (notificationRef.current) notificationRef.current(text);
@@ -72,11 +75,11 @@ export function SessionContextProvider({
     setRecaptchaValue(null);
     router.replace("/");
   };
-  const sendTextToSession = async (text: string) => {
+  const sendTextToSession = async (textUpdate: TextUpdate) => {
     if (session.socket) {
       if (session.socket.webSocket.readyState == WebSocket.OPEN) {
         session.socket.webSocket.send(
-          JSON.stringify({ type: "send", text: text }),
+          JSON.stringify({ type: "sendText", textUpdate: textUpdate }),
         );
       } else {
         console.log("Websocket connection has been already closed.");
@@ -123,10 +126,17 @@ export function SessionContextProvider({
 
       if (
         parsedData.type &&
-        parsedData.type === "msg" &&
-        typeof parsedData.message === "string"
+        parsedData.type === "returnText" &&
+        typeof parsedData.textUpdate.index === "number" &&
+        typeof parsedData.textUpdate.deleted === "string" &&
+        typeof parsedData.textUpdate.added === "string"
       )
-        setCurrentText(parsedData.message);
+        setCurrentText((oldText) => {
+          return CopypasteHelper.getNewTextFromUpdate(
+            oldText,
+            parsedData.textUpdate,
+          );
+        });
 
       if (
         parsedData.type &&

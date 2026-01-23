@@ -1,22 +1,19 @@
-interface TextUpdate {
+export interface TextUpdate {
   index: number;
   added: string;
   deleted: string;
 }
 
 export const CopypasteHelper = {
-  reconstructedText: <string>"",
-
-  TESTaddOrRemoveToOld(textUpdate: TextUpdate) {
-    const firstPart = this.reconstructedText.substring(0, textUpdate.index);
-    const secondPart = this.reconstructedText.substring(
+  getNewTextFromUpdate(oldText: string, textUpdate: TextUpdate): string {
+    const firstPart = oldText.substring(0, textUpdate.index);
+    const secondPart = oldText.substring(
       textUpdate.index + textUpdate.deleted.length,
-      this.reconstructedText.length,
+      oldText.length,
     );
 
-    const textWithRemoved = firstPart + textUpdate.added + secondPart;
-    console.log(textWithRemoved);
-    this.reconstructedText = textWithRemoved;
+    const newText = firstPart + textUpdate.added + secondPart;
+    return newText;
   },
 
   getDifferenceStart(newText: string, oldText: string): number {
@@ -56,7 +53,6 @@ export const CopypasteHelper = {
       added: added,
       deleted: deleted,
     };
-    this.TESTaddOrRemoveToOld(finalObj);
     return finalObj;
   },
 };
