@@ -1,6 +1,14 @@
-import { ChangeEvent, Ref, useEffect, useRef, useState } from "react";
+import {
+  ChangeEvent,
+  ChangeEventHandler,
+  Ref,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { useSessionContext } from "../sessionContext";
 import ReCAPTCHA from "react-google-recaptcha";
+import { SessionCreationParameters } from "../services/session-service";
 export default function InitialPopupComponent({
   accessExistingSession,
   startNewSession,
@@ -8,12 +16,14 @@ export default function InitialPopupComponent({
   recaptchaValue,
 }: {
   accessExistingSession: (sessionId: string) => void;
-  startNewSession: () => void;
+  startNewSession: (parameters: SessionCreationParameters) => void;
   changeRecaptchaValue: (text: string | null) => void;
   recaptchaValue: string | null;
 }) {
   const { error } = useSessionContext();
   const [sessionId, setSessionId] = useState<string>("");
+  const [requireCaptcha, setRequireCaptcha] = useState<boolean>(false);
+  const [requirePassword, setRequirePassword] = useState<string>("");
 
   const sessionIdInput = (e: ChangeEvent<HTMLInputElement>) => {
     setSessionId(e.target.value);
@@ -31,6 +41,21 @@ export default function InitialPopupComponent({
 
   const onRecaptchaExpire = () => {
     changeRecaptchaValue(null);
+  };
+
+  const requireCaptchaChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setRequireCaptcha(e.target.checked);
+  };
+
+  const requirePasswordChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setRequirePassword(e.target.value);
+  };
+
+  const startNewSessionClick = () => {
+    startNewSession({
+      requireCaptcha: requireCaptcha,
+      requirePassword: requirePassword,
+    });
   };
 
   return (
@@ -53,14 +78,36 @@ export default function InitialPopupComponent({
         <div>
           <p className="font-bold text-black text-2xl">OR</p>
         </div>
-        <div className="w-full">
+        <div className="w-full flex items-center flex-col">
           <button
             disabled={!recaptchaValue}
-            onClick={startNewSession}
+            onClick={startNewSessionClick}
             className={`bg-yellow-200 h-20 rounded-xl font-bold border-2 text-green-500 cursor-pointer text-2xl w-full hover:opacity-75 select-none disabled:opacity-50`}
           >
             Start session
           </button>
+          <button>Additional session options</button>
+          <div className="flex flex-row gap-6">
+            <div className="flex flex-col">
+              <p className="opacity-75">Require following password</p>
+              <input
+                type="text"
+                className="bg-white"
+                placeholder="No password"
+                value={requirePassword}
+                onChange={requirePasswordChange}
+              />
+            </div>
+            <div className="flex flex-col">
+              <p className="opacity-75">Require captcha</p>
+              <input
+                checked={requireCaptcha}
+                onChange={requireCaptchaChange}
+                type="checkbox"
+                className="bg-white"
+              />
+            </div>
+          </div>
         </div>
         {error ? <p className="text-xl text-red-700">{error}</p> : null}
 

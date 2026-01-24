@@ -6,6 +6,7 @@ import {
   Session,
   SessionService,
   SessionConnectResponse,
+  SessionCreationParameters,
 } from "./services/session-service";
 import { CopypasteHelper, TextUpdate } from "./helpers/copypaste-helper";
 interface SessionContextInterface {
@@ -19,7 +20,7 @@ interface SessionContextInterface {
   session: Session;
   sessionManagement: {
     accessExistingSession: (sessionId: string) => void;
-    startNewSession: () => void;
+    startNewSession: (parameters: SessionCreationParameters) => void;
     exitSession: () => void;
   };
   setNotificationRef: (fn: (text: string) => void) => void;
@@ -174,9 +175,9 @@ export function SessionContextProvider({
       sessionConnectResponse.info.identifier,
     );
   };
-  const startNewSession = async () => {
+  const startNewSession = async (parameters: SessionCreationParameters) => {
     const sessionConnectResponse: SessionConnectResponse =
-      await SessionService.startConnection();
+      await SessionService.startConnection(parameters);
     if (!sessionConnectResponse.status || !sessionConnectResponse.info) {
       setError("No response from server...");
       return;

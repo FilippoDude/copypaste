@@ -17,6 +17,12 @@ export interface SessionSocket {
   webSocket: WebSocket;
   socketInfo: SessionSocketInfo;
 }
+
+export interface SessionCreationParameters {
+  requireCaptcha: boolean;
+  requirePassword: string;
+}
+
 export const SessionService = {
   async validateRecaptchaValue(recaptchaValue: string): Promise<string | null> {
     let finalValue: string | null = null;
@@ -78,11 +84,15 @@ export const SessionService = {
     return finalObj;
   },
 
-  async startConnection(): Promise<SessionConnectResponse> {
+  async startConnection(
+    parameters: SessionCreationParameters,
+  ): Promise<SessionConnectResponse> {
     //return {
     //  status: true,
     //  info: { websocketUrl: "https://test.com", identifier: "123" },
     ///};
+
+    console.log(parameters); // implement parameters on backend
     let finalObj: SessionConnectResponse | null = null;
     await fetch(SERVER_URL + "/start", {
       method: "GET",
