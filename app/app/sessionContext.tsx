@@ -115,7 +115,7 @@ export function SessionContextProvider({
     };
     socket.onmessage = (event: MessageEvent) => {
       const stringData: string = event.data.toString();
-      console.log(stringData);
+      //console.log(stringData);
       let parsedData = null;
       try {
         parsedData = JSON.parse(stringData);

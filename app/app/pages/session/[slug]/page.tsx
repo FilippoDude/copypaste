@@ -14,7 +14,7 @@ export default function SessionPage() {
   const [dateStartTime, setDateStartTime] = useState<string>("");
 
   const inputChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
-    console.log(e);
+    //console.log(e);
     sessionData.updateCurrentText(e.target.value);
   };
 
@@ -103,6 +103,7 @@ export default function SessionPage() {
       </div>
       <div className="relative w-full h-screen bg-gray-100">
         <textarea
+          maxLength={500000}
           placeholder="Psst... Write in here"
           onChange={inputChange}
           value={sessionData.currentText}
