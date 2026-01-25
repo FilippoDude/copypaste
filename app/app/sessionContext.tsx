@@ -91,16 +91,20 @@ export function SessionContextProvider({
     }
   };
 
-  const manageWebsocket = async (websocketUrl: string, identifier: string) => {
-    let jwtToken: string | null = null;
-    if (recaptchaValue) {
-      jwtToken = await SessionService.validateRecaptchaValue(recaptchaValue);
+  const manageWebsocket = async (
+    websocketUrl: string,
+    identifier: string,
+    jwtToken?: string,
+  ) => {
+    let newjwtToken: string | null = jwtToken ? jwtToken : null;
+    if (recaptchaValue && jwtToken === null) {
+      newjwtToken = await SessionService.validateRecaptchaValue(recaptchaValue);
     }
 
     const socket: WebSocket = new WebSocket(websocketUrl);
     socket.onopen = () => {
       console.log("Websocket connection opened.");
-      socket.send(JSON.stringify({ type: "verification", text: jwtToken }));
+      socket.send(JSON.stringify({ type: "verification", text: newjwtToken }));
       setSession((currentSession) => {
         currentSession.socket = {
           webSocket: socket,
@@ -176,8 +180,13 @@ export function SessionContextProvider({
     );
   };
   const startNewSession = async (parameters: SessionCreationParameters) => {
+    let newjwtToken: string | null = null;
+    if (recaptchaValue) {
+      newjwtToken = await SessionService.validateRecaptchaValue(recaptchaValue);
+    }
+
     const sessionConnectResponse: SessionConnectResponse =
-      await SessionService.startConnection(parameters);
+      await SessionService.startConnection(parameters, newjwtToken);
     if (!sessionConnectResponse.status || !sessionConnectResponse.info) {
       setError("No response from server...");
       return;
@@ -185,6 +194,7 @@ export function SessionContextProvider({
     manageWebsocket(
       sessionConnectResponse.info.websocketUrl,
       sessionConnectResponse.info.identifier,
+      newjwtToken ? newjwtToken : undefined,
     );
   };
 

@@ -86,6 +86,7 @@ export const SessionService = {
 
   async startConnection(
     parameters: SessionCreationParameters,
+    jwtToken: string | null,
   ): Promise<SessionConnectResponse> {
     //return {
     //  status: true,
@@ -95,11 +96,12 @@ export const SessionService = {
     console.log(parameters); // implement parameters on backend
     let finalObj: SessionConnectResponse | null = null;
     await fetch(SERVER_URL + "/start", {
-      method: "GET",
+      method: "POST",
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
       },
+      body: JSON.stringify({ jwtToken: jwtToken }),
     })
       .then((response) => response.json())
       .then((data) => {
