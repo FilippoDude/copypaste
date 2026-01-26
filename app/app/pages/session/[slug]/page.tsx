@@ -1,15 +1,15 @@
 "use client";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { ChangeEvent, useEffect, useReducer, useRef, useState } from "react";
 import Image from "next/image";
-import ToastComponent from "@/app/components/toast-component";
-import { useSessionContext } from "@/app/sessionContext";
-import { CopypasteHelper } from "@/app/helpers/copypaste-helper";
+import ToastComponent from "@/app/components/toast.component";
+import { useSessionContext } from "../../../sessionContext";
 
 export default function SessionPage() {
   const { session, sessionManagement, sessionData, sendNotificationFromLocal } =
     useSessionContext();
-  const { slug } = useParams();
+  const { slug } = useParams(); // session id
+  const searchParameters = useSearchParams();
   const latestCopyId = useRef(0);
   const [dateStartTime, setDateStartTime] = useState<string>("");
 
@@ -19,13 +19,24 @@ export default function SessionPage() {
   };
 
   useEffect(() => {
+    // THIS RUNS TWICE BECAUSE SESSION ISN'T SET FAST ENOUGH SINCE IT HAS TO PASS TROUGH THE API TO VALIDATE THE JWT AND THEN SET THE SOCKET
+    // MAKE IT SOME WAY THAT IT DOESN'T RUN TWICE
     if (
       !session.socket ||
       session.socket.socketInfo.identifier != slug ||
       session.socket.webSocket.readyState == WebSocket.CLOSED
     ) {
-      if (typeof slug == "string")
-        sessionManagement.accessExistingSession(slug);
+      if (session.starting) return;
+      if (typeof slug == "string") {
+        const token: string | null = searchParameters.get("token");
+        if (token && token.length > 0) {
+          console.log("OPENED WITH TOKEN");
+          sessionManagement.openSocketToExistingSession(slug, token);
+          return;
+        }
+        console.log("OPENED WITHOUT");
+        sessionManagement.openSocketToExistingSession(slug);
+      }
     }
   }, []);
 

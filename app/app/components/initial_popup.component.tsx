@@ -6,41 +6,42 @@ import {
   useRef,
   useState,
 } from "react";
-import { useSessionContext } from "../sessionContext";
+
 import ReCAPTCHA from "react-google-recaptcha";
-import { SessionCreationParameters } from "../services/session-service";
+import { SessionCreationParameters } from "../services/session.service";
+import { useRouter } from "next/navigation";
 export default function InitialPopupComponent({
-  accessExistingSession,
+  error,
   startNewSession,
-  changeRecaptchaValue,
-  recaptchaValue,
 }: {
-  accessExistingSession: (sessionId: string) => void;
-  startNewSession: (parameters: SessionCreationParameters) => void;
-  changeRecaptchaValue: (text: string | null) => void;
-  recaptchaValue: string | null;
+  error: string | null;
+  startNewSession: (
+    parameters: SessionCreationParameters,
+    recaptchaValue: string,
+  ) => void;
 }) {
-  const { error } = useSessionContext();
+  const router = useRouter();
   const [sessionId, setSessionId] = useState<string>("");
   const [requireCaptcha, setRequireCaptcha] = useState<boolean>(false);
   const [requirePassword, setRequirePassword] = useState<string>("");
+  const [recaptchaValue, setRecaptchaValue] = useState<string | null>(null);
 
   const sessionIdInput = (e: ChangeEvent<HTMLInputElement>) => {
     setSessionId(e.target.value);
   };
 
   const connectClick = () => {
-    accessExistingSession(sessionId);
+    router.replace("/pages/connect/" + sessionId);
   };
 
   const onRecaptchaChange = (e: string | null) => {
     if (e) {
-      changeRecaptchaValue(e);
+      setRecaptchaValue(e);
     }
   };
 
   const onRecaptchaExpire = () => {
-    changeRecaptchaValue(null);
+    setRecaptchaValue(null);
   };
 
   const requireCaptchaChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -52,10 +53,14 @@ export default function InitialPopupComponent({
   };
 
   const startNewSessionClick = () => {
-    startNewSession({
-      requireCaptcha: requireCaptcha,
-      requirePassword: requirePassword,
-    });
+    if (recaptchaValue)
+      startNewSession(
+        {
+          requireCaptcha: requireCaptcha,
+          requirePassword: requirePassword,
+        },
+        recaptchaValue,
+      );
   };
 
   return (
@@ -68,7 +73,7 @@ export default function InitialPopupComponent({
             type="text"
           />
           <button
-            disabled={sessionId.length == 0 || !recaptchaValue ? true : false}
+            disabled={sessionId.length == 0}
             onClick={connectClick}
             className="bg-yellow-200 w-30 h-20 rounded-xl font-bold border-2 border-gray-100 text-green-500 cursor-pointer text-2xl hover:opacity-75 select-none disabled:opacity-50"
           >

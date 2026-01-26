@@ -5,10 +5,11 @@ import { useRouter } from "next/navigation";
 import {
   Session,
   SessionService,
-  SessionConnectResponse,
   SessionCreationParameters,
-} from "./services/session-service";
-import { CopypasteHelper, TextUpdate } from "./helpers/copypaste-helper";
+  SessionStartResponse,
+  SessionInfoResponse,
+} from "./services/session.service";
+import { CopypasteHelper, TextUpdate } from "./helpers/copypaste.helper";
 interface SessionContextInterface {
   error: string | null;
   updateError: (error: string | null) => void;
@@ -19,14 +20,15 @@ interface SessionContextInterface {
   };
   session: Session;
   sessionManagement: {
-    accessExistingSession: (sessionId: string) => void;
-    startNewSession: (parameters: SessionCreationParameters) => void;
+    openSocketToExistingSession: (socketId: string, token?: string) => void;
+    startNewSession: (
+      parameters: SessionCreationParameters,
+      recaptchaValue: string,
+    ) => void;
     exitSession: () => void;
   };
   setNotificationRef: (fn: (text: string) => void) => void;
   sendNotificationFromLocal: (text: string) => void;
-  recaptchaValue: string | null;
-  changeRecaptchaValue: (text: string | null) => void;
 }
 
 const SessionContext = createContext<SessionContextInterface | null>(null);
@@ -37,17 +39,12 @@ export function SessionContextProvider({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const [session, setSession] = useState<Session>({});
+  const [session, setSession] = useState<Session>({ starting: false });
   const [error, setError] = useState<string | null>(null);
   const [currentText, setCurrentText] = useState<string>("");
   const [startTime, setStartTime] = useState(0);
-  const [recaptchaValue, setRecaptchaValue] = useState<string | null>(null);
 
   const notificationRef = useRef<(text: string) => void | null>(null);
-
-  const changeRecaptchaValue = (value: string | null) => {
-    setRecaptchaValue(value);
-  };
 
   const setNotificationRef = (fn: (text: string) => void) => {
     notificationRef.current = fn;
@@ -65,17 +62,19 @@ export function SessionContextProvider({
     );
     if (textUpdate) sendTextToSession(textUpdate);
   };
+
   const sendNotificationFromLocal = (text: string) => {
     if (notificationRef.current) notificationRef.current(text);
   };
+
   const closeConnection = () => {
     setCurrentText("");
     if (session.socket) session.socket.webSocket.close();
     setStartTime(0);
-    setSession({});
-    setRecaptchaValue(null);
+    setSession({ starting: false });
     router.replace("/");
   };
+
   const sendTextToSession = async (textUpdate: TextUpdate) => {
     if (session.socket) {
       if (session.socket.webSocket.readyState == WebSocket.OPEN) {
@@ -96,23 +95,18 @@ export function SessionContextProvider({
     identifier: string,
     jwtToken?: string,
   ) => {
-    let newjwtToken: string | null = jwtToken ? jwtToken : null;
-    if (recaptchaValue && jwtToken === null) {
-      newjwtToken = await SessionService.validateRecaptchaValue(recaptchaValue);
-    }
-
     const socket: WebSocket = new WebSocket(websocketUrl);
+    setSession((currentSession) => {
+      currentSession.socket = {
+        webSocket: socket,
+        socketInfo: { identifier: identifier, websocketUrl: websocketUrl },
+      };
+      return currentSession;
+    });
+    router.replace("/pages/session/" + identifier);
     socket.onopen = () => {
       console.log("Websocket connection opened.");
-      socket.send(JSON.stringify({ type: "verification", text: newjwtToken }));
-      setSession((currentSession) => {
-        currentSession.socket = {
-          webSocket: socket,
-          socketInfo: { identifier: identifier, websocketUrl: websocketUrl },
-        };
-        return currentSession;
-      });
-      router.replace("/pages/session/" + identifier);
+      socket.send(JSON.stringify({ type: "verification", text: jwtToken }));
     };
     socket.onclose = () => {
       console.log("Websocket connection closed.");
@@ -135,13 +129,16 @@ export function SessionContextProvider({
         typeof parsedData.textUpdate.index === "number" &&
         typeof parsedData.textUpdate.deleted === "string" &&
         typeof parsedData.textUpdate.added === "string"
-      )
+      ) {
+        console.log("FAULTY");
+        console.log(parsedData.textUpdate);
         setCurrentText((oldText) => {
           return CopypasteHelper.getNewTextFromUpdate(
             oldText,
             parsedData.textUpdate,
           );
         });
+      }
 
       if (
         parsedData.type &&
@@ -167,35 +164,59 @@ export function SessionContextProvider({
     };
   };
 
-  const accessExistingSession = async (sessionId: string) => {
-    const sessionConnectResponse: SessionConnectResponse =
-      await SessionService.connectToSession(sessionId);
-    if (!sessionConnectResponse.status || !sessionConnectResponse.info) {
-      setError("No response from server...");
-      return;
+  const openSocketToExistingSession = async (
+    sessionId: string,
+    token?: string,
+  ) => {
+    session.starting = true;
+    try {
+      const sessionInfoResponse: SessionInfoResponse =
+        await SessionService.getSessionInfo(sessionId);
+      if (!sessionInfoResponse.status || !sessionInfoResponse.info) {
+        throw new Error("Failed connecting to session.");
+      }
+      manageWebsocket(
+        // works even without captcha because server does not care if verification packet is provided if the requirement is not present
+        sessionInfoResponse.info.websocketUrl,
+        sessionInfoResponse.info.identifier,
+        token,
+      );
+    } catch (e: any) {
+      setError(e);
+      session.starting = false;
     }
-    manageWebsocket(
-      sessionConnectResponse.info.websocketUrl,
-      sessionConnectResponse.info.identifier,
-    );
   };
-  const startNewSession = async (parameters: SessionCreationParameters) => {
-    let newjwtToken: string | null = null;
-    if (recaptchaValue) {
-      newjwtToken = await SessionService.validateRecaptchaValue(recaptchaValue);
-    }
 
-    const sessionConnectResponse: SessionConnectResponse =
-      await SessionService.startConnection(parameters, newjwtToken);
-    if (!sessionConnectResponse.status || !sessionConnectResponse.info) {
-      setError("No response from server...");
-      return;
+  const startNewSession = async (
+    parameters: SessionCreationParameters,
+    recaptchaValue: string,
+  ) => {
+    session.starting = true;
+    try {
+      let token: string | null = null;
+      if (recaptchaValue) {
+        token = await SessionService.validateRecaptchaValue(recaptchaValue);
+      }
+
+      if (!token) {
+        throw new Error("Captcha validation failed.");
+      }
+
+      const sessionStartResponse: SessionStartResponse =
+        await SessionService.startSession(parameters, token);
+      if (!sessionStartResponse.status || !sessionStartResponse.info) {
+        throw new Error("Failed to start a new session.");
+      }
+      console.log(token);
+      manageWebsocket(
+        sessionStartResponse.info.websocketUrl,
+        sessionStartResponse.info.identifier,
+        token,
+      );
+    } catch (e: any) {
+      setError(e);
+      session.starting = false;
     }
-    manageWebsocket(
-      sessionConnectResponse.info.websocketUrl,
-      sessionConnectResponse.info.identifier,
-      newjwtToken ? newjwtToken : undefined,
-    );
   };
 
   const exitSession = async () => {
@@ -214,14 +235,12 @@ export function SessionContextProvider({
         updateError,
         session,
         sessionManagement: {
-          accessExistingSession,
+          openSocketToExistingSession,
           startNewSession,
           exitSession,
         },
         setNotificationRef,
         sendNotificationFromLocal,
-        recaptchaValue,
-        changeRecaptchaValue,
       }}
     >
       {children}

@@ -1,11 +1,28 @@
 import { SERVER_URL } from "@/enviroment";
 
 export interface Session {
+  starting: boolean;
   socket?: SessionSocket;
 }
-export interface SessionConnectResponse {
+
+export interface SessionStartResponse {
   status: boolean;
   info?: SessionSocketInfo;
+}
+export interface SessionInfoResponse {
+  status: boolean;
+  info?: SessionSocketInfo;
+  clientRequirements?: ClientRequirements;
+}
+
+export interface ClientRequirements {
+  captchaRequired: boolean;
+  passwordRequired: boolean;
+}
+
+export interface CompiledClientRequirements {
+  recaptchaValue?: string;
+  password?: string;
 }
 
 export interface SessionSocketInfo {
@@ -47,13 +64,13 @@ export const SessionService = {
     return finalValue;
   },
 
-  async connectToSession(sessionId: string): Promise<SessionConnectResponse> {
+  async getSessionInfo(sessionId: string): Promise<SessionInfoResponse> {
     //return {
     //  status: true,
     //  info: { websocketUrl: "https://test.com", identifier: "123" },
     ///};
-    let finalObj: SessionConnectResponse | null = null;
-    await fetch(SERVER_URL + "/connect/" + sessionId, {
+    let finalObj: SessionInfoResponse | null = null;
+    await fetch(SERVER_URL + "/getInfo/" + sessionId, {
       method: "GET",
       headers: {
         Accept: "application/json",
@@ -72,9 +89,30 @@ export const SessionService = {
           finalObj = { status: false };
           return;
         }
+
+        const clientRequirements = data["clientRequirements"];
+        let passwordRequired = clientRequirements["passwordRequired"];
+        console.log(passwordRequired);
+        let captchaRequired = clientRequirements["captchaRequired"];
+        console.log(captchaRequired);
+        if (typeof passwordRequired != "boolean") {
+          passwordRequired = false;
+        }
+
+        if (typeof captchaRequired != "boolean") {
+          captchaRequired = false;
+        }
+
         finalObj = {
           status: true,
-          info: { websocketUrl: websocketUrl, identifier: identifier },
+          info: {
+            websocketUrl: websocketUrl,
+            identifier: identifier,
+          },
+          clientRequirements: {
+            passwordRequired: passwordRequired,
+            captchaRequired: captchaRequired,
+          },
         };
       })
       .catch(() => {
@@ -84,17 +122,38 @@ export const SessionService = {
     return finalObj;
   },
 
-  async startConnection(
-    parameters: SessionCreationParameters,
-    jwtToken: string | null,
-  ): Promise<SessionConnectResponse> {
-    //return {
-    //  status: true,
-    //  info: { websocketUrl: "https://test.com", identifier: "123" },
-    ///};
+  async getConnectionToken(
+    sessionId: string,
+    compiledClientRequirements: CompiledClientRequirements,
+  ): Promise<string | null> {
+    let token: string | null = null;
+    await fetch(SERVER_URL + "/connect/" + sessionId, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(compiledClientRequirements),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (!data) {
+          return;
+        }
+        const connectionToken = data.connectionToken;
+        if (typeof connectionToken === "string") {
+          token = connectionToken;
+        }
+      });
+    return token;
+  },
 
+  async startSession(
+    parameters: SessionCreationParameters,
+    jwtToken: string,
+  ): Promise<SessionStartResponse> {
     console.log(parameters); // implement parameters on backend
-    let finalObj: SessionConnectResponse | null = null;
+    let finalObj: SessionStartResponse | null = null;
     await fetch(SERVER_URL + "/start", {
       method: "POST",
       headers: {
