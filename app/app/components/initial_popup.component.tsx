@@ -87,25 +87,25 @@ export default function InitialPopupComponent({
           >
             Start session
           </button>
-          <button>Additional session options</button>
+          <button className="mt-2">Additional session options</button>
           <div className="flex flex-row gap-6">
             <div className="flex flex-col">
               <p className="opacity-75">Require following password</p>
               <input
                 type="text"
-                className="bg-white"
+                className="bg-white p-2"
                 placeholder="No password"
                 value={requirePassword}
                 onChange={requirePasswordChange}
               />
             </div>
-            <div className="flex flex-col">
+            <div className="flex flex-col items-center">
               <p className="opacity-75">Require captcha</p>
               <input
                 checked={requireCaptcha}
                 onChange={requireCaptchaChange}
                 type="checkbox"
-                className="bg-white"
+                className="bg-white w-10 h-10"
               />
             </div>
           </div>

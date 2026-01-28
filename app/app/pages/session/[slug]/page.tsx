@@ -12,6 +12,7 @@ export default function SessionPage() {
   const searchParameters = useSearchParams();
   const latestCopyId = useRef(0);
   const [dateStartTime, setDateStartTime] = useState<string>("");
+  const [dateTerminationTime, setDateTerminationTime] = useState<string>("");
 
   const inputChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
     //console.log(e);
@@ -53,6 +54,11 @@ export default function SessionPage() {
   };
 
   useEffect(() => {
+    setStartTimeDate();
+    setTerminationTimeDate();
+  }, [sessionData.startTime]);
+
+  const setStartTimeDate = () => {
     const date = new Date(sessionData.startTime);
     const formattedDate: string =
       date.getDate().toString() +
@@ -67,7 +73,24 @@ export default function SessionPage() {
       ":" +
       date.getMinutes();
     setDateStartTime(formattedDate);
-  }, [sessionData.startTime]);
+  };
+
+  const setTerminationTimeDate = () => {
+    const date = new Date(sessionData.terminationTime);
+    const formattedDate: string =
+      date.getDate().toString() +
+      "/" +
+      (date.getMonth() + 1).toString() +
+      "/" +
+      date.getFullYear().toString() +
+      " | " +
+      date.getHours() +
+      ":" +
+      date.getMinutes() +
+      ":" +
+      date.getMinutes();
+    setDateTerminationTime(formattedDate);
+  };
 
   return (
     <div>
@@ -106,10 +129,12 @@ export default function SessionPage() {
         </div>
       </div>
 
-      <div className="fixed top-25 right-2 w-60 h-17 bg-green-200 rounded-2xl p-2 border-gray-400 border-2 z-10 flex flex-row">
+      <div className="fixed top-25 right-2 w-60 h-30 bg-green-200 rounded-2xl p-2 border-gray-400 border-2 z-10 flex flex-row">
         <div>
           <p className="font-bold text-gray-600">Session start time</p>
           <p>{dateStartTime}</p>
+          <p className="font-bold text-gray-600">Session termination time</p>
+          <p>{dateTerminationTime}</p>
         </div>
       </div>
       <div className="relative w-full h-screen bg-gray-100">

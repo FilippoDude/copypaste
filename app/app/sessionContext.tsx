@@ -17,6 +17,7 @@ interface SessionContextInterface {
     currentText: string;
     updateCurrentText: (text: string) => void;
     startTime: number;
+    terminationTime: number;
   };
   session: Session;
   sessionManagement: {
@@ -43,6 +44,7 @@ export function SessionContextProvider({
   const [error, setError] = useState<string | null>(null);
   const [currentText, setCurrentText] = useState<string>("");
   const [startTime, setStartTime] = useState(0);
+  const [terminationTime, setTerminationTime] = useState(0);
 
   const notificationRef = useRef<(text: string) => void | null>(null);
 
@@ -157,6 +159,7 @@ export function SessionContextProvider({
       ) {
         setCurrentText(parsedData.message);
         setStartTime(parsedData.startTime);
+        setTerminationTime(parsedData.terminationTime);
       }
     };
     socket.onerror = () => {
@@ -231,6 +234,7 @@ export function SessionContextProvider({
           currentText,
           updateCurrentText,
           startTime,
+          terminationTime,
         },
         updateError,
         session,
