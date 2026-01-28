@@ -15,7 +15,6 @@ export default function SessionPage() {
   const [dateTerminationTime, setDateTerminationTime] = useState<string>("");
 
   const inputChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
-    //console.log(e);
     sessionData.updateCurrentText(e.target.value);
   };
 
@@ -31,11 +30,9 @@ export default function SessionPage() {
       if (typeof slug == "string") {
         const token: string | null = searchParameters.get("token");
         if (token && token.length > 0) {
-          console.log("OPENED WITH TOKEN");
           sessionManagement.openSocketToExistingSession(slug, token);
           return;
         }
-        console.log("OPENED WITHOUT");
         sessionManagement.openSocketToExistingSession(slug);
       }
     }

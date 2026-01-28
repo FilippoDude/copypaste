@@ -29,8 +29,6 @@ export default function ToastComponent() {
     if (!isBuffering.current && messagesBuffer.current.length > 0) {
       isBuffering.current = true;
       const messageToAdd = messagesBuffer.current.pop()!;
-      console.log("buffer array: " + messagesBuffer.current);
-      console.log(messageToAdd);
       latestToastId.current = latestToastId.current + 1;
       setMessagesArray((array) => {
         const arrayCopy = [
@@ -62,7 +60,6 @@ export default function ToastComponent() {
   const testAddMessage = () => {
     addMessage("TEST " + tempId.current);
     tempId.current = tempId.current + 1;
-    console.log(messagesArray);
   };
 
   useEffect(() => {

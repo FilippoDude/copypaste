@@ -44,10 +44,6 @@ export const CopypasteHelper = {
     const deleted = oldText.slice(start, oldEnd + 1);
     const added = newText.slice(start, newEnd + 1);
 
-    console.log("IT STARTS AT: " + start.toString());
-    console.log("DELETED: " + deleted);
-    console.log("INSERTED: " + added);
-
     let finalObj: TextUpdate = {
       index: start,
       added: added,

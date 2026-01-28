@@ -96,9 +96,7 @@ export const SessionService = {
 
           const clientRequirements = data["clientRequirements"];
           let passwordRequired = clientRequirements["passwordRequired"];
-          console.log(passwordRequired);
           let captchaRequired = clientRequirements["captchaRequired"];
-          console.log(captchaRequired);
           if (typeof passwordRequired != "boolean") {
             passwordRequired = false;
           }
@@ -162,7 +160,6 @@ export const SessionService = {
     parameters: SessionCreationParameters,
     jwtToken: string,
   ): Promise<SessionStartResponse> {
-    console.log(parameters);
     let finalObj: SessionStartResponse = { status: false };
     try {
       await fetch(SERVER_URL + "/start", {

@@ -28,13 +28,11 @@ export default function ConnectPage() {
       setError("No response from server...");
       return;
     }
-    console.log(sessionInfoResponse.clientRequirements);
     if (
       sessionInfoResponse.clientRequirements &&
       (sessionInfoResponse.clientRequirements.captchaRequired ||
         sessionInfoResponse.clientRequirements.passwordRequired)
     ) {
-      console.log("SET REQUIREMENTS");
       setClientRequirements(sessionInfoResponse.clientRequirements);
     } else {
       setClientRequirements(null);

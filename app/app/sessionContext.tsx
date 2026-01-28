@@ -132,8 +132,6 @@ export function SessionContextProvider({
         typeof parsedData.textUpdate.deleted === "string" &&
         typeof parsedData.textUpdate.added === "string"
       ) {
-        console.log("FAULTY");
-        console.log(parsedData.textUpdate);
         setCurrentText((oldText) => {
           return CopypasteHelper.getNewTextFromUpdate(
             oldText,
@@ -210,7 +208,6 @@ export function SessionContextProvider({
       if (!sessionStartResponse.status || !sessionStartResponse.info) {
         throw new Error("Failed to start a new session.");
       }
-      console.log(token);
       manageWebsocket(
         sessionStartResponse.info.websocketUrl,
         sessionStartResponse.info.identifier,
