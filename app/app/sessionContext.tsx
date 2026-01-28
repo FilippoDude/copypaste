@@ -50,8 +50,8 @@ export function SessionContextProvider({
     notificationRef.current = fn;
   };
 
-  const updateError = (error: null | string) => {
-    setError(error);
+  const updateError = (error: any) => {
+    setError(error.toString());
   };
 
   const updateCurrentText = (text: string) => {
@@ -160,7 +160,7 @@ export function SessionContextProvider({
       }
     };
     socket.onerror = () => {
-      setError("Failed to connect to websocket.");
+      updateError("Failed to connect to websocket.");
     };
   };
 
@@ -182,7 +182,7 @@ export function SessionContextProvider({
         token,
       );
     } catch (e: any) {
-      setError(e);
+      updateError(e);
       session.starting = false;
     }
   };
@@ -214,7 +214,7 @@ export function SessionContextProvider({
         token,
       );
     } catch (e: any) {
-      setError(e);
+      updateError(e);
       session.starting = false;
     }
   };

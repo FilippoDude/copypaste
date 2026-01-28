@@ -1,6 +1,7 @@
 "use client";
 import {
   ClientRequirements,
+  ConnectionResponse,
   SessionInfoResponse,
   SessionService,
 } from "@/app/services/session.service";
@@ -33,6 +34,7 @@ export default function ConnectPage() {
       (sessionInfoResponse.clientRequirements.captchaRequired ||
         sessionInfoResponse.clientRequirements.passwordRequired)
     ) {
+      console.log("SET REQUIREMENTS");
       setClientRequirements(sessionInfoResponse.clientRequirements);
     } else {
       setClientRequirements(null);
@@ -46,19 +48,24 @@ export default function ConnectPage() {
   const submit = async () => {
     // HERE MAKE CONNECTION REQUEST TO SERVER FOR TOKEN AND SEND USER TO PAGE SESSION PAGE WITH TOKEN IN URL
     if (typeof slug === "string") {
-      const token: string | null = await SessionService.getConnectionToken(
-        slug,
-        {
+      const connectionResponse: ConnectionResponse =
+        await SessionService.getConnectionToken(slug, {
           recaptchaValue: recaptchaValue,
           password: password,
-        },
-      );
-      if (!token) {
-        // SHOW ERROR MESSAGE FOR NON RESPECTED SESSION CLIENT CONDITIONS
-        setError("CONDITIONS NOT MET");
+        });
+      if (!connectionResponse.status || !connectionResponse.token) {
+        if (!connectionResponse.error) setError("An error has occurred.");
+        else if (connectionResponse.error === "SESSION_NOT_FOUND")
+          setError("Session not found.");
+        else if (connectionResponse.error === "INVALID_PASSWORD")
+          setError("Password is invalid.");
+        else if (connectionResponse.error === "INVALID_CAPTCHA")
+          setError("Captcha is invalid.");
+        return;
       }
-      console.log(token);
-      router.replace(`/pages/session/${slug}?token=${token}`); // Append the token so it gets to session page
+      router.replace(
+        `/pages/session/${slug}?token=${connectionResponse.token}`,
+      ); // Append the token so it gets to session page
     }
   };
 
@@ -75,26 +82,37 @@ export default function ConnectPage() {
   };
 
   return (
-    <div className="fixed w-full h-full">
-      {clientRequirements?.captchaRequired ? (
-        <>
-          <p>CAPTCHA REQUIRED</p>
-          <ReCAPTCHA
-            onChange={onRecaptchaChange}
-            onExpired={onRecaptchaExpire}
-            sitekey="6Ldjx1AsAAAAAK4Xae3ztA4woSzJGPTE-MbBE5Np"
-          />
-        </>
-      ) : null}
+    <div className="fixed w-full h-full flex items-center justify-center">
+      <div className="flex flex-col items-center justify-center bg-green-200 p-4 rounded-2xl">
+        {clientRequirements?.captchaRequired ? (
+          <>
+            <p>CAPTCHA REQUIRED</p>
+            <ReCAPTCHA
+              onChange={onRecaptchaChange}
+              onExpired={onRecaptchaExpire}
+              sitekey="6Ldjx1AsAAAAAK4Xae3ztA4woSzJGPTE-MbBE5Np"
+            />
+          </>
+        ) : null}
 
-      {clientRequirements?.captchaRequired ? (
-        <>
-          <p>PASSWORD REQUIRED</p>
-          <input type="text" onChange={passwordInputChange} />
-        </>
-      ) : null}
-      <p>{error}</p>
-      <button onClick={submit}>Submit</button>
+        {clientRequirements?.passwordRequired ? (
+          <div>
+            <p>PASSWORD REQUIRED</p>
+            <input
+              className="bg-white p-2 rounded-lg"
+              type="text"
+              onChange={passwordInputChange}
+            />
+          </div>
+        ) : null}
+        <p>{error}</p>
+        <button
+          className="cursor-pointer bg-yellow-200 hover:opacity-75 px-2 py-1 rounded-xl mt-2"
+          onClick={submit}
+        >
+          Submit
+        </button>
+      </div>
     </div>
   );
 }

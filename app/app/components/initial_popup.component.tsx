@@ -1,11 +1,5 @@
-import {
-  ChangeEvent,
-  ChangeEventHandler,
-  Ref,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+"use client";
+import { ChangeEvent, useState } from "react";
 
 import ReCAPTCHA from "react-google-recaptcha";
 import { SessionCreationParameters } from "../services/session.service";
@@ -61,11 +55,13 @@ export default function InitialPopupComponent({
         },
         recaptchaValue,
       );
+
+    setRecaptchaValue(null);
   };
 
   return (
     <div className="fixed w-full h-full flex items-center justify-center">
-      <div className="relative w-fit h-130 px-10 bg-green-200 rounded-2xl border-2 border-gray-400 flex items-center justify-center flex-col gap-10">
+      <div className="relative w-fit min-h-130 px-10 py-5 bg-green-200 rounded-2xl border-2 border-gray-400 flex items-center justify-center flex-col gap-10">
         <div className="flex flex-row gap-5">
           <input
             onChange={sessionIdInput}
@@ -114,7 +110,9 @@ export default function InitialPopupComponent({
             </div>
           </div>
         </div>
-        {error ? <p className="text-xl text-red-700">{error}</p> : null}
+        {error ? (
+          <p className="text-xl text-red-700">{error.toString()}</p>
+        ) : null}
 
         <ReCAPTCHA
           onChange={onRecaptchaChange}
