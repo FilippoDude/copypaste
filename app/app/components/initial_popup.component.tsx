@@ -4,6 +4,16 @@ import { ChangeEvent, useState } from "react";
 import ReCAPTCHA from "react-google-recaptcha";
 import { SessionCreationParameters } from "../services/session.service";
 import { useRouter } from "next/navigation";
+import TextField from "@mui/material/TextField";
+import Button from "@mui/material/Button";
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Typography,
+} from "@mui/material";
+import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
+
 export default function InitialPopupComponent({
   error,
   startNewSession,
@@ -61,54 +71,72 @@ export default function InitialPopupComponent({
 
   return (
     <div className="fixed w-full h-full flex items-center justify-center">
-      <div className="relative w-fit min-h-130 px-10 py-5 bg-green-200 rounded-2xl border-2 border-gray-400 flex items-center justify-center flex-col gap-10">
+      <div className="relative w-fit min-h-130 px-10 py-5 bg-green-200 rounded-2xl border-2 border-gray-400 flex items-center justify-center flex-col gap-5">
         <div className="flex flex-row gap-5">
-          <input
+          <TextField
             onChange={sessionIdInput}
-            className="bg-green-300 rounded-xl w-150 h-20 border-2 border-gray-100 px-2"
-            type="text"
+            id="outlined-basic"
+            label="Session Id"
+            variant="outlined"
+            className="w-150 "
           />
-          <button
+          <Button
             disabled={sessionId.length == 0}
             onClick={connectClick}
-            className="bg-yellow-200 w-30 h-20 rounded-xl font-bold border-2 border-gray-100 text-green-500 cursor-pointer text-2xl hover:opacity-75 select-none disabled:opacity-50"
+            variant="contained"
           >
             Connect
-          </button>
+          </Button>
         </div>
         <div>
-          <p className="font-bold text-black text-2xl">OR</p>
+          <p className="font-bold text-black text-xl">OR</p>
         </div>
         <div className="w-full flex items-center flex-col">
-          <button
+          <Button
             disabled={!recaptchaValue}
             onClick={startNewSessionClick}
-            className={`bg-yellow-200 h-20 rounded-xl font-bold border-2 text-green-500 cursor-pointer text-2xl w-full hover:opacity-75 select-none disabled:opacity-50`}
+            variant="contained"
+            className=" w-full h-20"
           >
             Start session
-          </button>
-          <button className="mt-2">Additional session options</button>
-          <div className="flex flex-row gap-6">
-            <div className="flex flex-col">
-              <p className="opacity-75">Require following password</p>
-              <input
-                type="text"
-                className="bg-white p-2"
-                placeholder="No password"
-                value={requirePassword}
-                onChange={requirePasswordChange}
-              />
-            </div>
-            <div className="flex flex-col items-center">
-              <p className="opacity-75">Require captcha</p>
-              <input
-                checked={requireCaptcha}
-                onChange={requireCaptchaChange}
-                type="checkbox"
-                className="bg-white w-10 h-10"
-              />
-            </div>
+          </Button>
+          <div className="mt-2">
+            <Accordion>
+              <AccordionSummary
+                expandIcon={<ArrowDropDownIcon />}
+                aria-controls="panel1-content"
+                id="panel1-header"
+              >
+                <Typography component="span">
+                  Additional session options
+                </Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <div className="flex flex-row gap-20">
+                  <div className="flex flex-col">
+                    <p className="opacity-75">Require following password</p>
+                    <TextField
+                      id="filled-basic"
+                      label="Password"
+                      variant="filled"
+                      value={requirePassword}
+                      onChange={requirePasswordChange}
+                    />
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <p className="opacity-75">Require captcha</p>
+                    <input
+                      checked={requireCaptcha}
+                      onChange={requireCaptchaChange}
+                      type="checkbox"
+                      className="bg-white w-10 h-10"
+                    />
+                  </div>
+                </div>
+              </AccordionDetails>
+            </Accordion>
           </div>
+          <div className="flex flex-row gap-6"></div>
         </div>
         {error ? (
           <p className="text-xl text-red-700">{error.toString()}</p>
